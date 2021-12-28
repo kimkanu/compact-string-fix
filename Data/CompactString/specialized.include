@@ -1,0 +1,371 @@
+-- |
+-- Module      : Data.CompactString.Unsafe
+-- License     : BSD-style
+-- Maintainer  : twanvl@gmail.com
+-- Stability   : experimental
+-- Portability : untested
+-- 
+-- CompactString specialized to LONG_DESCRIPTION.
+--
+-- This module can be used to reduce the need for type signatures,
+-- since in most cases only a single encoding is used.
+--
+module Data.CompactString.ENCODING (
+        
+        -- * The CompactString type
+        CompactString,         -- abstract instances: Eq Ord Show Monoid
+        
+        -- * Introducing and eliminating CompactStrings
+        empty,                  -- :: CompactString
+        singleton,              -- :: Char   -> CompactString
+        pack,                   -- :: String -> CompactString
+        unpack,                 -- :: CompactString -> String
+        
+        -- * Basic interface
+        cons,                   -- :: Char -> CompactString -> CompactString
+        snoc,                   -- :: CompactString -> Char -> CompactString
+        append,                 -- :: CompactString -> CompactString -> CompactString
+        head,                   -- :: CompactString -> Char
+        last,                   -- :: CompactString -> Char
+        tail,                   -- :: CompactString -> CompactString
+        init,                   -- :: CompactString -> CompactString
+        headView,               -- :: CompactString -> Maybe (Char, CompactString)
+        lastView,               -- :: CompactString -> Maybe (CompactString, Char)
+        null,                   -- :: CompactString -> Bool
+        length,                 -- :: CompactString -> Int
+        
+        -- * Transforming CompactStrings
+        map,                    -- :: (Char -> Char) -> CompactString -> CompactString
+        reverse,                -- :: CompactString -> CompactString
+        intersperse,            -- :: Char -> CompactString -> CompactString
+        intercalate,            -- :: CompactString -> [CompactString] -> CompactString
+        transpose,              -- :: [CompactString] -> [CompactString]
+        
+        -- * Reducing CompactStrings (folds)
+        foldl,                  -- :: (a -> Char -> a) -> a -> CompactString -> a
+        foldl',                 -- :: (a -> Char -> a) -> a -> CompactString -> a
+        foldl1,                 -- :: (Char -> Char -> Char) -> CompactString -> Char
+        foldl1',                -- :: (Char -> Char -> Char) -> CompactString -> Char
+        
+        foldr,                  -- :: (Char -> a -> a) -> a -> CompactString -> a
+        foldr',                 -- :: (Char -> a -> a) -> a -> CompactString -> a
+        foldr1,                 -- :: (Char -> Char -> Char) -> CompactString -> Char
+        foldr1',                -- :: (Char -> Char -> Char) -> CompactString -> Char
+        
+        -- ** Special folds
+        concat,                 -- :: [CompactString] -> CompactString
+        concatMap,              -- :: (Char -> CompactString) -> CompactString -> CompactString
+        any,                    -- :: (Char -> Bool) -> CompactString -> Bool
+        all,                    -- :: (Char -> Bool) -> CompactString -> Bool
+        maximum,                -- :: CompactString -> Char
+        minimum,                -- :: CompactString -> Char
+        
+        -- * Building CompactStrings
+        -- ** Scans
+        scanl,                  -- :: (Char -> Char -> Char) -> Char -> CompactString -> CompactString
+        scanl1,                 -- :: (Char -> Char -> Char) ->         CompactString -> CompactString
+        scanr,                  -- :: (Char -> Char -> Char) -> Char -> CompactString -> CompactString
+        scanr1,                 -- :: (Char -> Char -> Char) ->         CompactString -> CompactString
+        
+        -- ** Accumulating maps
+        mapAccumL,              -- :: (acc -> Char -> (acc, Char)) -> acc -> CompactString -> (acc, CompactString)
+        mapAccumR,              -- :: (acc -> Char -> (acc, Char)) -> acc -> CompactString -> (acc, CompactString)
+        mapIndexed,             -- :: (Int -> Char -> Char) -> CompactString -> CompactString
+        
+        -- ** Unfolding CompactStrings
+        replicate,              -- :: Int -> Char -> CompactString
+        unfoldr,                -- :: (a -> Maybe (Char, a)) -> a -> CompactString
+        unfoldrN,               -- :: Int -> (a -> Maybe (Char, a)) -> a -> (CompactString, Maybe a)
+        
+        -- * Substrings
+        
+        -- ** Breaking strings
+        take,                   -- :: Int -> CompactString -> CompactString
+        drop,                   -- :: Int -> CompactString -> CompactString
+        splitAt,                -- :: Int -> CompactString -> (CompactString, CompactString)
+        takeWhile,              -- :: (Char -> Bool) -> CompactString -> CompactString
+        dropWhile,              -- :: (Char -> Bool) -> CompactString -> CompactString
+        span,                   -- :: (Char -> Bool) -> CompactString -> (CompactString, CompactString)
+        spanEnd,                -- :: (Char -> Bool) -> CompactString -> (CompactString, CompactString)
+        break,                  -- :: (Char -> Bool) -> CompactString -> (CompactString, CompactString)
+        breakEnd,               -- :: (Char -> Bool) -> CompactString -> (CompactString, CompactString)
+        group,                  -- :: CompactString -> [CompactString]
+        groupBy,                -- :: (Char -> Char -> Bool) -> CompactString -> [CompactString]
+        inits,                  -- :: CompactString -> [CompactString]
+        tails,                  -- :: CompactString -> [CompactString]
+        
+        -- ** Breaking into many substrings
+        split,                  -- :: Char -> CompactString -> [CompactString]
+        splitWith,              -- :: (Char -> Bool) -> CompactString -> [CompactString]
+        
+        -- ** Breaking into lines and words
+        lines,                  -- :: CompactString -> [CompactString]
+        words,                  -- :: CompactString -> [CompactString]
+        unlines,                -- :: [CompactString] -> CompactString
+        unwords,                -- :: CompactString -> [CompactString]
+        
+        -- * Predicates
+        isPrefixOf,             -- :: CompactString -> CompactString -> Bool
+        isSuffixOf,             -- :: CompactString -> CompactString -> Bool
+        isInfixOf,              -- :: CompactString -> CompactString -> Bool
+        
+        -- ** Search for arbitrary substrings
+        findSubstring,          -- :: CompactString -> CompactString -> Maybe Int
+        findSubstrings,         -- :: CompactString -> CompactString -> [Int]
+        
+        -- * Searching CompactStrings
+        
+        -- ** Searching by equality
+        elem,                   -- :: Char -> CompactString -> Bool
+        notElem,                -- :: Char -> CompactString -> Bool
+        
+        -- ** Searching with a predicate
+        find,                   -- :: (Char -> Bool) -> CompactString -> Maybe Char
+        filter,                 -- :: (Char -> Bool) -> CompactString -> CompactString
+        partition,              -- :: (Char -> Bool) -> CompactString -> (CompactString, CompactString)
+        
+        -- * Indexing CompactStrings
+        index,                  -- :: CompactString -> Int -> Char
+        elemIndex,              -- :: Char -> CompactString -> Maybe Int
+        elemIndices,            -- :: Char -> CompactString -> [Int]
+        elemIndexEnd,           -- :: Char -> CompactString -> Maybe Int
+        findIndex,              -- :: (Char -> Bool) -> CompactString -> Maybe Int
+        findIndexEnd,           -- :: (Char -> Bool) -> CompactString -> Maybe Int
+        findIndices,            -- :: (Char -> Bool) -> CompactString -> [Int]
+        count,                  -- :: Char -> CompactString -> Int
+        
+        -- * Zipping and unzipping CompactStrings
+        zip,                    -- :: CompactString -> CompactString -> [(Char,Char)]
+        zipWith,                -- :: (Char -> Char -> c) -> CompactString -> CompactString -> [c]
+        zipWith',               -- :: (Char -> Char -> Char) -> CompactString -> CompactString -> CompactString
+        unzip,                  -- :: [(Char,Char)] -> (CompactString,CompactString)
+        
+        -- * Ordered CompactStrings
+        sort,                   -- :: CompactString -> CompactString
+        
+        -- * Encoding
+        toByteString,           -- :: CompactString -> ByteString
+        fromByteString,         -- :: ByteString -> m CompactString
+        fromByteString_,        -- :: ByteString -> CompactString
+        validate,               -- :: CompactString -> m CompactString
+        validate_,              -- :: CompactString -> CompactString
+        -- ** Encoding conversion
+        encode,                 -- :: Encoding a => a -> CompactString -> m (ByteString)
+        encode_,                -- :: Encoding a => a -> CompactString -> ByteString
+        decode,                 -- :: Encoding a => a -> ByteString -> m (CompactString)
+        decode_,                -- :: Encoding a => a -> ByteString -> CompactString
+        encodeBOM,              -- :: CompactString -> m (ByteString)
+        encodeBOM_,             -- :: CompactString -> ByteString
+        decodeBOM,              -- :: ByteString -> m (CompactString)
+        decodeBOM_,             -- :: ByteString -> CompactString
+        
+        -- * I\/O with 'CompactString's
+        
+        -- ** Standard input and output
+        getLine,                -- :: IO CompactString
+        getContents,            -- :: IO CompactString
+        putStr,                 -- :: CompactString -> IO ()
+        putStrLn,               -- :: CompactString -> IO ()
+        interact,               -- :: (CompactString -> CompactString) -> IO ()
+        
+        -- ** Files
+        readFile,               -- :: FilePath -> IO CompactString
+        readFile',              -- :: FilePath -> IO CompactString
+        writeFile,              -- :: FilePath -> CompactString -> IO ()
+        writeFile',             -- :: FilePath -> CompactString -> IO ()
+        appendFile,             -- :: FilePath -> CompactString -> IO ()
+        appendFile',            -- :: FilePath -> CompactString -> IO ()
+        
+        -- ** I\/O with Handles
+        hGetLine,               -- :: Handle -> IO CompactString
+        hGetContents,           -- :: Handle -> IO CompactString
+        hGetContents',          -- :: Handle -> IO CompactString
+        hGet,                   -- :: Handle -> Int -> IO CompactString
+        hGetNonBlocking,        -- :: Handle -> Int -> IO CompactString
+        hPut,                   -- :: Handle -> CompactString -> IO ()
+        hPutStr,                -- :: Handle -> CompactString -> IO ()
+        hPutStrLn,              -- :: Handle -> CompactString -> IO ()
+        
+        ) where
+
+import Prelude hiding
+        (length, head, tail, last, init, null, 
+         map, reverse, foldl, foldr, foldl1, foldr1, concat, concatMap,
+         scanl, scanl1, scanr, scanr1, replicate,
+         take, drop, splitAt, takeWhile, dropWhile,
+         span, break, any, all, elem, notElem,
+         maximum, minimum, filter, zip, zipWith, unzip,
+         lines, unlines, words, unwords,
+         putStr, putStrLn, getContents, getLine, interact,
+         readFile, writeFile, appendFile)
+
+import System.IO                (Handle)
+import Control.Monad            (MonadPlus)
+
+import Data.CompactString.Internal  (Encoding, ByteString)
+import qualified Data.CompactString as C
+import qualified Data.CompactString.Encodings as C
+
+-- -----------------------------------------------------------------------------
+--
+-- The @CompactString@ type
+--
+
+-- | CompactString specialized to DESCRIPTION.
+type CompactString = C.CompactString C.TYPE
+
+-- -----------------------------------------------------------------------------
+--
+-- Type signatures & documentation
+--
+
+#define COMPACTSTRING CompactString
+#define CONTEXT
+#define CONTEXT_
+#include "signatures.include"
+
+-- -----------------------------------------------------------------------------
+--
+-- Specialized versions
+--
+
+empty           = C.empty
+singleton       = C.singleton
+pack            = C.pack
+unpack          = C.unpack
+
+cons            = C.cons
+snoc            = C.snoc
+append          = C.append
+head            = C.head
+last            = C.last
+tail            = C.tail
+init            = C.init
+headView        = C.headView
+lastView        = C.lastView
+null            = C.null
+length          = C.length
+
+map             = C.map
+reverse         = C.reverse
+intersperse     = C.intersperse
+intercalate     = C.intercalate
+transpose       = C.transpose
+
+foldl           = C.foldl
+foldl'          = C.foldl'
+foldl1          = C.foldl1
+foldl1'         = C.foldl1'
+foldr           = C.foldr
+foldr'          = C.foldr'
+foldr1          = C.foldr1
+foldr1'         = C.foldr1'
+
+concat          = C.concat
+concatMap       = C.concatMap
+any             = C.any
+all             = C.all
+maximum         = C.maximum
+minimum         = C.minimum
+
+scanl           = C.scanl
+scanl1          = C.scanl1
+scanr           = C.scanr
+scanr1          = C.scanr1
+
+mapAccumL       = C.mapAccumL
+mapAccumR       = C.mapAccumR
+mapIndexed      = C.mapIndexed
+
+replicate       = C.replicate
+unfoldr         = C.unfoldr
+unfoldrN        = C.unfoldrN
+
+take            = C.take
+drop            = C.drop
+splitAt         = C.splitAt 
+takeWhile       = C.takeWhile
+dropWhile       = C.dropWhile
+span            = C.span
+spanEnd         = C.spanEnd
+break           = C.break
+breakEnd        = C.breakEnd
+group           = C.group
+groupBy         = C.groupBy
+inits           = C.inits
+tails           = C.tails
+
+split           = C.split
+splitWith       = C.splitWith
+
+lines           = C.lines
+unlines         = C.unlines
+words           = C.words
+unwords         = C.unwords
+
+isPrefixOf      = C.isPrefixOf
+isSuffixOf      = C.isSuffixOf
+
+isInfixOf       = C.isInfixOf
+findSubstring   = C.findSubstring
+findSubstrings  = C.findSubstrings
+
+elem            = C.elem
+notElem         = C.notElem
+
+find            = C.find
+filter          = C.filter
+partition       = C.partition
+
+index           = C.index
+elemIndex       = C.elemIndex
+elemIndices     = C.elemIndices
+elemIndexEnd    = C.elemIndexEnd
+findIndex       = C.findIndex
+findIndexEnd    = C.findIndexEnd
+findIndices     = C.findIndices
+count           = C.count
+
+zip             = C.zip
+zipWith         = C.zipWith
+zipWith'        = C.zipWith'
+unzip           = C.unzip
+
+sort            = C.sort
+
+toByteString    = C.toByteString
+fromByteString  = C.fromByteString
+fromByteString_ = C.fromByteString_
+validate        = C.validate
+validate_       = C.validate_
+
+encode          = C.encode
+encode_         = C.encode_
+decode          = C.decode
+decode_         = C.decode_
+encodeBOM       = C.encodeBOM
+encodeBOM_      = C.encodeBOM_
+decodeBOM       = C.decodeBOM
+decodeBOM_      = C.decodeBOM_
+
+getLine         = C.getLine
+getContents     = C.getContents
+putStr          = C.putStr
+putStrLn        = C.putStrLn
+interact        = C.interact
+
+readFile        = C.readFile
+readFile'       = C.readFile'
+writeFile       = C.writeFile
+writeFile'      = C.writeFile'
+appendFile      = C.appendFile
+appendFile'     = C.appendFile'
+
+hGetLine        = C.hGetLine
+hGetContents    = C.hGetContents
+hGetContents'   = C.hGetContents'
+hGet            = C.hGet
+hGetNonBlocking = C.hGetNonBlocking
+hPut            = C.hPut
+hPutStr         = C.hPutStr
+hPutStrLn       = C.hPutStrLn

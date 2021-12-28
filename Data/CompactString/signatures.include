@@ -1,0 +1,746 @@
+
+-- Type signatures & Haddock comment
+-- these are used by both the normal Data.CompactString
+-- and the versions specialized to a specific encoding
+-- 
+-- Requires:
+--  #define COMPACTSTRING
+--  #define CONTEXT
+
+-- -----------------------------------------------------------------------------
+--
+-- Construction
+--
+
+-- | /O(1)/ The empty 'CompactString'
+empty :: COMPACTSTRING
+
+-- | /O(1)/ Convert a 'Char' into a 'CompactString'
+singleton :: CONTEXT Char -> COMPACTSTRING
+
+-- | /O(n)/ Convert a 'String' into a 'CompactString'.
+pack :: CONTEXT String -> COMPACTSTRING
+
+-- | /O(n)/ Converts a 'CompactString' to a 'String'.
+unpack :: CONTEXT COMPACTSTRING -> String
+
+-- -----------------------------------------------------------------------------
+--
+-- Basic interface
+--
+
+-- | /O(n)/ 'cons' is analogous to (:) for lists, but of different
+-- complexity, as it requires a memcpy.
+cons :: CONTEXT Char -> COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(n)/ Append a byte to the end of a 'CompactString'
+snoc :: CONTEXT COMPACTSTRING -> Char -> COMPACTSTRING
+
+-- | /O(1)/ Extract the first element of a CompactString, which must be non-empty.
+-- An exception will be thrown in the case of an empty CompactString.
+head :: CONTEXT COMPACTSTRING -> Char
+
+-- | /O(1)/ Extract the elements after the head of a CompactString, which must be non-empty.
+-- An exception will be thrown in the case of an empty CompactString.
+tail :: CONTEXT COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(1)/ Extract the last element of a ByteString, which must be finite and non-empty.
+-- An exception will be thrown in the case of an empty ByteString.
+last :: CONTEXT COMPACTSTRING -> Char
+
+-- | /O(1)/ Return all the elements of a 'CompactString' except the last one.
+-- An exception will be thrown in the case of an empty ByteString.
+init :: CONTEXT COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(1)/ A view of the front of a 'CompactString'.
+--
+-- > headView s = if null s then Nothing else Just (head s, tail s)
+headView :: CONTEXT COMPACTSTRING -> Maybe (Char, COMPACTSTRING)
+
+-- | /O(1)/ A view of the back of a 'CompactString'.
+--
+-- > lastView s = if null s then Nothing else Just (init s, last s)
+lastView :: CONTEXT COMPACTSTRING -> Maybe (COMPACTSTRING, Char)
+
+-- | /O(n)/ Append two CompactStrings
+append :: CONTEXT COMPACTSTRING -> COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(1)/ Test whether a CompactString is empty.
+null :: CONTEXT COMPACTSTRING -> Bool
+
+-- | /O(n)/ 'length' returns the length of a CompactString as an 'Int'.
+length :: CONTEXT COMPACTSTRING -> Int
+
+
+-- -----------------------------------------------------------------------------
+--
+-- Transforming 'CompactString's
+--
+
+-- | /O(n)/ 'map' @f xs@ is the CompactString obtained by applying @f@ to each
+-- element of @xs@. This function is subject to array fusion.
+map :: CONTEXT (Char -> Char) -> COMPACTSTRING -> COMPACTSTRING
+
+-- | Reverse a 'CompactString'
+reverse :: CONTEXT COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(n)/ The 'intersperse' function takes a 'Char' and a
+-- 'CompactString' and \`intersperses\' that character between the elements of
+-- the 'CompactString'.  It is analogous to the intersperse function on
+-- Lists.
+intersperse :: CONTEXT Char -> COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(n)/ The 'intercalate' function takes a 'CompactString' and a list of
+-- 'CompactString's and concatenates the list after interspersing the first
+-- argument between each element of the list.
+intercalate :: CONTEXT COMPACTSTRING -> [COMPACTSTRING] -> COMPACTSTRING
+
+-- | The 'transpose' function transposes the rows and columns of its
+-- 'CompactString' argument.
+transpose :: CONTEXT [COMPACTSTRING] -> [COMPACTSTRING]
+        
+-- -----------------------------------------------------------------------------
+--
+-- Reducing 'CompactString's (folds)
+--
+
+-- | 'foldl', applied to a binary operator, a starting value (typically
+-- the left-identity of the operator), and a CompactString, reduces the
+-- CompactString using the binary operator, from left to right.
+-- This function is subject to array fusion.
+foldl :: CONTEXT (acc -> Char -> acc) -> acc -> COMPACTSTRING -> acc
+
+-- | 'foldl\'' is like 'foldl', but strict in the accumulator.
+-- Though actually foldl is also strict in the accumulator.
+foldl'
+    :: CONTEXT (acc -> Char -> acc) -> acc -> COMPACTSTRING -> acc
+
+-- | 'foldr', applied to a binary operator, a starting value
+-- (typically the right-identity of the operator), and a CompactString,
+-- reduces the CompactString using the binary operator, from right to left.
+foldr :: CONTEXT (Char -> acc -> acc) -> acc -> COMPACTSTRING -> acc
+
+-- | 'foldr', applied to a binary operator, a starting value
+-- (typically the right-identity of the operator), and a CompactString,
+-- reduces the CompactString using the binary operator, from right to left.
+foldr'
+    :: CONTEXT (Char -> acc -> acc) -> acc -> COMPACTSTRING -> acc
+
+-- | 'foldl1' is a variant of 'foldl' that has no starting value
+-- argument, and thus must be applied to non-empty 'CompactString'.
+-- This function is subject to array fusion. 
+-- An exception will be thrown in the case of an empty CompactString.
+foldl1 :: CONTEXT (Char -> Char -> Char) -> COMPACTSTRING -> Char
+
+-- | 'foldl1\'' is like 'foldl1', but strict in the accumulator.
+-- An exception will be thrown in the case of an empty CompactString.
+foldl1'
+    :: CONTEXT (Char -> Char -> Char) -> COMPACTSTRING -> Char
+
+-- | 'foldr1' is a variant of 'foldr' that has no starting value argument,
+-- and thus must be applied to non-empty 'CompactString's
+-- An exception will be thrown in the case of an empty CompactString.
+foldr1 :: CONTEXT (Char -> Char -> Char) -> COMPACTSTRING -> Char
+
+-- | 'foldr1\'' is a variant of 'foldr1', but is strict in the
+-- accumulator.
+-- An exception will be thrown in the case of an empty CompactString.
+foldr1'
+    :: CONTEXT (Char -> Char -> Char) -> COMPACTSTRING -> Char
+
+-- -----------------------------------------------------------------------------
+--
+-- Special folds
+--
+
+-- | /O(n)/ Concatenate a list of 'CompactString's.
+concat :: CONTEXT [COMPACTSTRING] -> COMPACTSTRING
+
+-- | Map a function over a 'CompactString' and concatenate the results
+concatMap :: CONTEXT (Char -> COMPACTSTRING) -> COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(n)/ Applied to a predicate and a CompactString, 'any' determines if
+-- any element of the 'CompactString' satisfies the predicate.
+any :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> Bool
+-- | /O(n)/ Applied to a predicate and a CompactString, 'any' determines if
+-- all elements of the 'CompactString' satisfy the predicate.
+all :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> Bool
+
+-- | /O(n)/ 'maximum' returns the maximum value from a 'CompactString'
+-- An exception will be thrown in the case of an empty CompactString.
+maximum :: CONTEXT COMPACTSTRING -> Char
+-- | /O(n)/ 'minimum' returns the minimum value from a 'CompactString'
+-- An exception will be thrown in the case of an empty CompactString.
+minimum :: CONTEXT COMPACTSTRING -> Char
+
+-- -----------------------------------------------------------------------------
+--
+-- Building CompactStrings : Scans
+--
+
+-- | 'scanl' is similar to 'foldl', but returns a list of successive
+-- reduced values from the left. This function will fuse.
+--
+-- > scanl f z [x1, x2, ...] == [z, z `f` x1, (z `f` x1) `f` x2, ...]
+--
+-- Note that
+--
+-- > last (scanl f z xs) == foldl f z xs.
+scanl :: CONTEXT (Char -> Char -> Char) -> Char -> COMPACTSTRING -> COMPACTSTRING
+
+-- | 'scanl1' is a variant of 'scanl' that has no starting value argument.
+-- This function will fuse.
+--
+-- > scanl1 f [x1, x2, ...] == [x1, x1 `f` x2, ...]
+scanl1 :: CONTEXT (Char -> Char -> Char) -> COMPACTSTRING -> COMPACTSTRING
+
+-- | scanr is the right-to-left dual of scanl.
+scanr :: CONTEXT (Char -> Char -> Char) -> Char -> COMPACTSTRING -> COMPACTSTRING
+
+-- | 'scanr1' is a variant of 'scanr' that has no starting value argument.
+scanr1 :: CONTEXT (Char -> Char -> Char) -> COMPACTSTRING -> COMPACTSTRING
+
+-- -----------------------------------------------------------------------------
+--
+-- Building CompactStrings : Accumulating maps
+--
+
+-- | The 'mapAccumL' function behaves like a combination of 'map' and
+-- 'foldl'; it applies a function to each element of a CompactString,
+-- passing an accumulating parameter from left to right, and returning a
+-- final value of this accumulator together with the new CompactString.
+mapAccumL :: CONTEXT (acc -> Char -> (acc, Char)) -> acc -> COMPACTSTRING -> (acc, COMPACTSTRING)
+
+-- | The 'mapAccumR' function behaves like a combination of 'map' and
+-- 'foldr'; it applies a function to each element of a CompactString,
+-- passing an accumulating parameter from right to left, and returning a
+-- final value of this accumulator together with the new CompactString.
+mapAccumR :: CONTEXT (acc -> Char -> (acc, Char)) -> acc -> COMPACTSTRING -> (acc, COMPACTSTRING)
+
+-- | /O(n)/ map Char functions, provided with the index at each position.
+mapIndexed :: CONTEXT (Int -> Char -> Char) -> COMPACTSTRING -> COMPACTSTRING
+
+-- -----------------------------------------------------------------------------
+--
+-- Building CompactStrings : Unfolding CompactStrings
+--
+
+-- | /O(n)/ 'replicate' @n x@ is a CompactString of length @n@ with @x@
+-- the value of every element. The following holds:
+--
+-- > replicate w c = unfoldr w (\u -> Just (u,u)) c
+replicate :: CONTEXT Int -> Char -> COMPACTSTRING
+
+-- | /O(n)/, where /n/ is the length of the result.  The 'unfoldr' 
+-- function is analogous to the List \'unfoldr\'.  'unfoldr' builds a 
+-- ByteString from a seed value.  The function takes the element and 
+-- returns 'Nothing' if it is done producing the CompactString or returns 
+-- 'Just' @(a,b)@, in which case, @a@ is the next byte in the string, 
+-- and @b@ is the seed value for further production.
+--
+-- Examples:
+--
+-- >    unfoldr (\x -> if x <= 5 then Just (x, x + 1) else Nothing) 0
+-- > == pack [0, 1, 2, 3, 4, 5]
+--
+unfoldr :: CONTEXT (acc -> Maybe (Char, acc)) -> acc -> COMPACTSTRING
+
+-- | /O(n)/ Like 'unfoldr', 'unfoldrN' builds a ByteString from a seed
+-- value.  However, the length of the result is limited by the first
+-- argument to 'unfoldrN'.  This function is more efficient than 'unfoldr'
+-- when the maximum length of the result is known.
+--
+-- The following equation relates 'unfoldrN' and 'unfoldr':
+--
+-- > fst (unfoldrN n f s) == take n (unfoldr f s)
+--
+unfoldrN :: CONTEXT Int -> (acc -> Maybe (Char, acc)) -> acc -> (COMPACTSTRING, Maybe acc)
+
+-- -----------------------------------------------------------------------------
+--
+-- Substrings : Breaking strings
+--
+
+-- | /O(n)/ 'take' @n@, applied to a CompactString @xs@, returns the prefix
+-- of @xs@ of length @n@, or @xs@ itself if @n > 'length' xs@.
+take :: CONTEXT Int -> COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(n)/ 'drop' @n xs@ returns the suffix of @xs@ after the first @n@
+-- elements, or @empty@ if @n > 'length' xs@.
+drop :: CONTEXT Int -> COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(n)/ 'splitAt' @n xs@ is equivalent to @('take' n xs, 'drop' n xs)@.
+splitAt :: CONTEXT Int -> COMPACTSTRING -> (COMPACTSTRING, COMPACTSTRING)
+
+-- | 'takeWhile', applied to a predicate @p@ and a CompactString @xs@,
+-- returns the longest prefix (possibly empty) of @xs@ of elements that
+-- satisfy @p@.
+takeWhile :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> COMPACTSTRING
+
+-- | 'dropWhile' @p xs@ returns the suffix remaining after 'takeWhile' @p xs@.
+dropWhile :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> COMPACTSTRING
+
+-- | 'break' @p@ is equivalent to @'span' ('not' . p)@.
+break :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> (COMPACTSTRING, COMPACTSTRING)
+
+-- | 'span' @p xs@ breaks the ByteString into two segments. It is
+-- equivalent to @('takeWhile' p xs, 'dropWhile' p xs)@
+span :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> (COMPACTSTRING, COMPACTSTRING)
+
+-- | 'breakEnd' behaves like 'break' but from the end of the 'CompactString'
+-- 
+-- > breakEnd p == spanEnd (not.p)
+breakEnd :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> (COMPACTSTRING, COMPACTSTRING)
+
+-- | 'spanEnd' behaves like 'span' but from the end of the 'CompactString'
+-- 
+-- We have
+--
+-- > spanEnd (not.isSpace) "x y z" == ("x y ","z")
+--
+-- and
+--
+-- > spanEnd (not . isSpace) cs
+-- >    == 
+-- > let (x,y) = span (not.isSpace) (reverse cs) in (reverse y, reverse x)
+--
+spanEnd :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> (COMPACTSTRING, COMPACTSTRING)
+
+
+-- | The 'group' function takes a 'CompactString' and returns a list of
+-- CompactStrings such that the concatenation of the result is equal to the
+-- argument.  Moreover, each sublist in the result contains only equal
+-- elements.  For example,
+--
+-- > group "Mississippi" = ["M","i","ss","i","ss","i","pp","i"]
+--
+-- It is a special case of 'groupBy', which allows the programmer to
+-- supply their own equality test.
+group :: CONTEXT COMPACTSTRING -> [COMPACTSTRING]
+
+-- | The 'groupBy' function is the non-overloaded version of 'group'.
+groupBy :: CONTEXT (Char -> Char -> Bool) -> COMPACTSTRING -> [COMPACTSTRING]
+
+-- | /O(n)/ Return all initial segments of the given 'CompactString', shortest first.
+inits :: CONTEXT COMPACTSTRING -> [COMPACTSTRING]
+
+-- | /O(n)/ Return all final segments of the given 'CompactString', longest first.
+tails :: CONTEXT COMPACTSTRING -> [COMPACTSTRING]
+
+-- -----------------------------------------------------------------------------
+--
+-- Substrings : Breaking into many substrings
+--
+
+-- | /O(n)/ Splits a 'CompactString' into components delimited by
+-- separators, where the predicate returns True for a separator element.
+-- The resulting components do not contain the separators.  Two adjacent
+-- separators result in an empty component in the output.  eg.
+--
+-- > splitWith (=='a') "aabbaca" == ["","","bb","c",""]
+-- > splitWith (=='a') []        == []
+--
+splitWith :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> [COMPACTSTRING]
+
+-- | /O(n)/ Break a 'ByteString' into pieces separated by the byte
+-- argument, consuming the delimiter. I.e.
+--
+-- > split '\n' "a\nb\nd\ne" == ["a","b","d","e"]
+-- > split 'a'  "aXaXaXa"    == ["","X","X","X",""]
+-- > split 'x'  "x"          == ["",""]
+-- 
+-- and
+--
+-- > intercalate [c] . split c == id
+-- > split == splitWith . (==)
+-- 
+-- As for all splitting functions in this library, this function does
+-- not copy the substrings, it just constructs new 'CompactString' that
+-- are slices of the original.
+--
+split :: CONTEXT Char -> COMPACTSTRING -> [COMPACTSTRING]
+
+-- -----------------------------------------------------------------------------
+--
+-- Substrings : Breaking into lines and words
+--
+
+-- | 'lines' breaks a 'CompactString' up into a list of CompactStrings at
+-- newline Chars. The resulting strings do not contain newlines.
+lines :: CONTEXT COMPACTSTRING -> [COMPACTSTRING]
+
+-- | 'unlines' is an inverse operation to 'lines'.  It joins lines,
+-- after appending a terminating newline to each.
+unlines :: CONTEXT [COMPACTSTRING] -> COMPACTSTRING
+
+-- | 'words' breaks a ByteString up into a list of words, which
+-- were delimited by Chars representing white space. And
+--
+-- > words = filter (not . null) . splitWith isSpace
+--
+words :: CONTEXT COMPACTSTRING -> [COMPACTSTRING]
+
+-- | The 'unwords' function is analogous to the 'unlines' function, on words.
+unwords :: CONTEXT [COMPACTSTRING] -> COMPACTSTRING
+
+-- -----------------------------------------------------------------------------
+--
+-- Predicates
+--
+
+-- | /O(n)/ The 'isPrefixOf' function takes two CompactString and returns 'True'
+-- iff the first is a prefix of the second.
+isPrefixOf :: COMPACTSTRING -> COMPACTSTRING -> Bool
+
+-- | /O(n)/ The 'isSuffixOf' function takes two CompactString and returns 'True'
+-- iff the first is a suffix of the second.
+--
+-- The following holds:
+--
+-- > isSuffixOf x y == reverse x `isPrefixOf` reverse y
+--
+isSuffixOf :: CONTEXT COMPACTSTRING -> COMPACTSTRING -> Bool
+
+-- -----------------------------------------------------------------------------
+--
+-- Predicates : Search for arbitrary substrings
+--
+
+-- | Check whether one string is a substring of another. @isInfixOf
+-- p s@ is equivalent to @not (null (findSubstrings p s))@.
+isInfixOf :: CONTEXT COMPACTSTRING -- ^ String to search for.
+                      -> COMPACTSTRING -- ^ String to search in.
+                      -> Bool
+
+-- | Get the first index of a substring in another string,
+--   or 'Nothing' if the string is not found.
+--   @findSubstring p s@ is equivalent to @listToMaybe (findSubstrings p s)@.
+findSubstring :: CONTEXT COMPACTSTRING -- ^ String to search for.
+                      -> COMPACTSTRING -- ^ String to seach in.
+                      -> Maybe Int
+
+-- | Find the indexes of all (possibly overlapping) occurances of a
+-- substring in a string.  This function uses the Knuth-Morris-Pratt
+-- string matching algorithm.
+findSubstrings :: CONTEXT COMPACTSTRING -- ^ String to search for.
+                       -> COMPACTSTRING -- ^ String to seach in.
+                       -> [Int]
+
+-- -----------------------------------------------------------------------------
+--
+-- Searching by equality
+--
+
+-- | /O(n)/ 'elem' is the 'CompactString' membership predicate.
+elem :: CONTEXT Char -> COMPACTSTRING -> Bool
+
+-- | /O(n)/ 'notElem' is the inverse of 'elem'
+notElem :: CONTEXT Char -> COMPACTSTRING -> Bool
+
+-- -----------------------------------------------------------------------------
+--
+-- Searching with a predicate
+--
+
+-- | /O(n)/ The 'find' function takes a predicate and a 'CompactString',
+-- and returns the first element in matching the predicate, or 'Nothing'
+-- if there is no such element.
+--
+-- > find f p = case findIndex f p of Just n -> Just (p `index` n) ; _ -> Nothing
+--
+find :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> Maybe Char
+
+-- | /O(n)/ 'filter', applied to a predicate and a 'CompactString',
+-- returns a CompactString containing those characters that satisfy the
+-- predicate. This function is subject to array fusion.
+filter :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(n)/ 'partition', applied to a predicate and a 'CompactString',
+-- returns a pair of CompactStrings.
+-- The first containing those characters that satisfy the predicate,
+-- the second containg those that don't.
+partition :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> (COMPACTSTRING, COMPACTSTRING)
+
+-- -----------------------------------------------------------------------------
+--
+-- Indexing CompactStrings
+--
+
+-- | /O(IF_FIXED(1,n))/ 'CompactString' index (subscript) operator, starting from 0.
+index :: CONTEXT COMPACTSTRING -> Int -> Char
+
+-- | /O(n)/ The 'elemIndex' function returns the index of the first
+-- element in the given 'ByteString' which is equal to the query
+-- element, or 'Nothing' if there is no such element. 
+elemIndex :: CONTEXT Char -> COMPACTSTRING -> Maybe Int
+
+-- | /O(n)/ The 'elemIndexEnd' function returns the last index of the
+-- element in the given 'CompactString' which is equal to the query
+-- element, or 'Nothing' if there is no such element. The following
+-- holds:
+--
+-- > elemIndexEnd c xs == 
+-- > (-) (length xs - 1) `fmap` elemIndex c (reverse xs)
+--
+elemIndexEnd :: CONTEXT Char -> COMPACTSTRING -> Maybe Int
+
+-- | /O(n)/ The 'elemIndices' function extends 'elemIndex', by returning
+-- the indices of all elements equal to the query element, in ascending order.
+elemIndices :: CONTEXT Char -> COMPACTSTRING -> [Int]
+
+-- | The 'findIndex' function takes a predicate and a 'CompactString' and
+-- returns the index of the first element in the CompactString
+-- satisfying the predicate.
+findIndex :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> Maybe Int
+
+-- | /O(n)/ The 'findIndexEnd' function returns the last index of the
+-- element in the given 'CompactString' which satisfies the predicate,
+-- or 'Nothing' if there is no such element. The following holds:
+--
+-- > findIndexEnd c xs == 
+-- > (-) (length xs - 1) `fmap` findIndex c (reverse xs)
+--
+findIndexEnd :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> Maybe Int
+
+-- | The 'findIndices' function extends 'findIndex', by returning the
+-- indices of all elements satisfying the predicate, in ascending order.
+findIndices :: CONTEXT (Char -> Bool) -> COMPACTSTRING -> [Int]
+
+-- | count returns the number of times its argument appears in the 'CompactString'
+--
+-- > count c = length . elemIndices c
+count :: CONTEXT Char -> COMPACTSTRING -> Int
+
+-- -----------------------------------------------------------------------------
+--
+-- Zipping and unzipping CompactStrings
+--
+
+-- | /O(n)/ 'zip' takes two ByteStrings and returns a list of
+-- corresponding pairs of bytes. If one input ByteString is short,
+-- excess elements of the longer ByteString are discarded. This is
+-- equivalent to a pair of 'unpack' operations.
+zip :: CONTEXT COMPACTSTRING -> COMPACTSTRING -> [(Char,Char)]
+
+-- | 'zipWith' generalises 'zip' by zipping with the function given as
+-- the first argument, instead of a tupling function.  For example,
+-- @'zipWith' (+)@ is applied to two ByteStrings to produce the list of
+-- corresponding sums. 
+zipWith :: CONTEXT (Char -> Char -> b) -> COMPACTSTRING -> COMPACTSTRING -> [b]
+
+--
+-- | A specialised version of 'zipWith' for the common case of a
+-- simultaneous map over two 'CompactString's, to build a 3rd. Rewrite rules
+-- are used to automatically covert zipWith into zipWith' when a pack is
+-- performed on the result of zipWith, but we also export it for
+-- convenience.
+--
+zipWith'
+    :: CONTEXT (Char -> Char -> Char) -> COMPACTSTRING -> COMPACTSTRING -> COMPACTSTRING
+
+-- | /O(n)/ 'unzip' transforms a list of pairs of bytes into a pair of
+-- CompactStrings. Note that this performs two 'pack' operations.
+unzip :: CONTEXT [(Char,Char)] -> (COMPACTSTRING,COMPACTSTRING)
+
+-- -----------------------------------------------------------------------------
+--
+-- Ordered CompactStrings
+--
+
+-- | /O(n log n)/ Sort a CompactString
+sort :: CONTEXT COMPACTSTRING -> COMPACTSTRING
+
+-- -----------------------------------------------------------------------------
+--
+-- Encoding
+--
+
+-- | Convert a CompactString to a ByteString
+toByteString :: CONTEXT COMPACTSTRING -> ByteString
+
+-- | Convert a ByteString to a CompactString.
+--   Fails if the ByteString is not a valid encoded string.
+fromByteString :: (CONTEXT_ MonadPlus m) => ByteString -> m (COMPACTSTRING)
+-- | Convert a ByteString to a CompactString.
+--   Raises an error if the ByteString is not a valid encoded string.
+fromByteString_ :: CONTEXT ByteString -> COMPACTSTRING
+
+-- | Validates a CompactString.
+--   If the string is invalid, fails, otherwise returns the input.
+validate :: (CONTEXT_ MonadPlus m) => COMPACTSTRING -> m (COMPACTSTRING)
+-- | Validates a CompactString.
+--   If the string is invalid, throws an error, otherwise returns the input.
+validate_ :: CONTEXT COMPACTSTRING -> COMPACTSTRING
+
+-- | Encode a CompactString to a ByteString using the given encoding.
+--
+--   > encode e = liftM toByteString . recode
+--
+--   But it might be faster for some combinations of encodings.
+--
+--   Fails if the string is cannot be encoded in the target encoding.
+encode :: (CONTEXT_ Encoding e, MonadPlus m) => e -> COMPACTSTRING -> m ByteString
+-- | Encode a CompactString to a ByteString using the given encoding.
+--
+--    > encode_ e = toByteString . recode
+--
+--   But it might be faster for some combinations of encodings.
+--
+--   Raises an error if the string is cannot be encoded in the target encoding.
+encode_ :: (CONTEXT_ Encoding e) => e -> COMPACTSTRING -> ByteString
+
+-- | Decode a ByteString to a CompactString using the given encoding.
+--
+--   > decode e = recode =<< fromByteString
+--
+--   but it might be faster for some combinations of encodings.
+--
+--   Fails if the ByteString is not a valid encoded string
+--   IF_NOT_REPRESENT(or if the string can not be represented in DESCRIPTION.)
+decode :: (CONTEXT_ Encoding e, MonadPlus m) => e -> ByteString -> m (COMPACTSTRING)
+-- | Decode a ByteString to a CompactString using the given encoding.
+--
+--   > decode_ e = recode_ . fromByteString_
+--
+--   but it might be faster for some combinations of encodings.
+--
+--   Raises an error if the ByteString is not a valid encoded string
+--   IF_NOT_REPRESENT(or if the string can not be represented in DESCRIPTION.)
+decode_ :: (CONTEXT_ Encoding e) => e -> ByteString -> COMPACTSTRING
+
+-- | Encode a 'CompactString' using the given encoding, and add a Byte Order Mark.
+--   Byte Order Marks are common on Windows, but not on other platforms.
+--
+--   Fails if the string is cannot be encoded in the target encoding.
+encodeBOM :: (CONTEXT_ Encoding e, MonadPlus m) => e -> COMPACTSTRING -> m ByteString
+-- | Encode a 'CompactString' using the given encoding, and add a Byte Order Mark.
+--   Byte Order Marks are common on Windows, but not on other platforms.
+--
+--   Raises an error if the string is cannot be encoded in the target encoding.
+encodeBOM_ :: (CONTEXT_ Encoding e) => e -> COMPACTSTRING -> ByteString
+
+-- | Decode a 'ByteString' into a 'CompactString', by investigating the Byte Order Mark.
+--   If there is no BOM assumes UTF-8.
+--   Fails if the input is not a valid encoded string
+--   IF_NOT_REPRESENT(or if the string can not be represented in DESCRIPTION.)
+--   
+--   For portability, this function should be prefered over @decode UTF8@ when reading files.
+decodeBOM :: (CONTEXT_ MonadPlus m) => ByteString -> m (COMPACTSTRING)
+-- | Decode a 'ByteString' into a 'CompactString', by investigating the Byte Order Mark.
+--   If there is no BOM assumes UTF-8.
+--   Raises an error if the input is not a valid encoded string
+--   IF_NOT_REPRESENT(or if the string can not be represented in DESCRIPTION.)
+--   
+--   For portability, this function should be prefered over @decode UTF8@ when reading files.
+decodeBOM_ :: CONTEXT ByteString -> COMPACTSTRING
+
+-- -----------------------------------------------------------------------------
+--
+-- Standard input and output
+--
+
+-- | Read a line from stdin.
+getLine :: CONTEXT IO (COMPACTSTRING)
+
+-- | getContents. Equivalent to @hGetContents stdin@
+--
+--   Input is assumed to be in DESCRIPTION, this may not be appropriate.
+getContents :: CONTEXT IO (COMPACTSTRING)
+
+-- | Write a 'CompactString' to stdout.
+--
+--   Output is written in DESCRIPTION, this may not be appropriate.
+putStr :: CONTEXT COMPACTSTRING -> IO ()
+
+-- | Write a 'CompactString' to stdout, appending a newline character.
+--
+--   Output is written in DESCRIPTION, this may not be appropriate.
+putStrLn :: CONTEXT COMPACTSTRING -> IO ()
+
+-- | The interact function takes a function of type @CompactString -> CompactString@
+-- as its argument. The entire input from the standard input device is passed
+-- to this function as its argument, and the resulting string is output on the
+-- standard output device. It's great for writing one line programs!
+interact :: CONTEXT (COMPACTSTRING -> COMPACTSTRING) -> IO ()
+
+-- -----------------------------------------------------------------------------
+--
+-- Files
+--
+
+-- | Read an entire file strictly into a 'CompactString'.  This is far more
+--   efficient than reading the characters into a 'String' and then using
+--   'pack'. Files are read using 'text mode' on Windows.
+--
+--   Files are assumed to be in DESCRIPTION.
+readFile :: CONTEXT FilePath -> IO (COMPACTSTRING)
+-- | Read an entire file strictly into a 'CompactString'.  This is far more
+--   efficient than reading the characters into a 'String' and then using
+--   'pack'. Files are read using 'text mode' on Windows.
+--
+--   The encoding of the file is determined based on a Byte Order Mark, see 'decodeBOM'.
+readFile'
+         :: CONTEXT FilePath -> IO (COMPACTSTRING)
+
+-- | Write a 'CompactString' to a file.
+--
+--   Files are written using DESCRIPTION.
+writeFile :: CONTEXT FilePath -> COMPACTSTRING -> IO ()
+-- | Write a 'CompactString' to a file.
+--
+--   Files are written using DESCRIPTION.
+--   A Byte Order Mark is also written.
+writeFile'
+          :: CONTEXT FilePath -> COMPACTSTRING -> IO ()
+
+-- | Append a 'CompactString' to a file.
+--
+--   Files are written using DESCRIPTION.
+appendFile :: CONTEXT FilePath -> COMPACTSTRING -> IO ()
+-- | Append a 'CompactString' to a file.
+--
+--   The encoding of the file is determined based on a Byte Order Mark.
+--   If the file is empty, it is written using DESCRIPTION with a Byte Order Mark.
+--   If the encoding can not be determined the file is assumed to be UTF-8.
+appendFile'
+           :: CONTEXT FilePath -> COMPACTSTRING -> IO ()
+
+-- -----------------------------------------------------------------------------
+--
+-- I\/O with Handles
+--
+
+-- | Read a line from a handle
+hGetLine :: CONTEXT Handle -> IO (COMPACTSTRING)
+
+-- | Read entire handle contents into a 'CompactString'.
+--
+--   The handle is interpreted as DESCRIPTION.
+hGetContents :: CONTEXT Handle -> IO (COMPACTSTRING)
+-- | Read entire handle contents into a 'CompactString'.
+--
+--   The encoding is determined based on a Byte Order Mark, see 'decodeBOM'.
+hGetContents'
+             :: CONTEXT Handle -> IO (COMPACTSTRING)
+
+-- | Read a 'CompactString' directly from the specified 'Handle'.
+--
+--   The handle is interpreted as DESCRIPTION.
+hGet :: CONTEXT Handle -> Int -> IO (COMPACTSTRING)
+-- | hGetNonBlocking is identical to 'hGet', except that it will never block
+-- waiting for data to become available, instead it returns only whatever data
+-- is available.
+--
+--   The handle is interpreted as DESCRIPTION.
+hGetNonBlocking :: CONTEXT Handle -> Int -> IO (COMPACTSTRING)
+
+-- | Outputs a 'CompactString' to the specified 'Handle'.
+--
+--   Output is written in DESCRIPTION.
+hPut :: CONTEXT Handle -> COMPACTSTRING -> IO ()
+-- | A synonym for @hPut@, for compatibility 
+hPutStr :: CONTEXT Handle -> COMPACTSTRING -> IO ()
+-- | Write a 'CompactString' to a handle, appending a newline byte
+--
+--   Output is written in DESCRIPTION.
+hPutStrLn :: CONTEXT Handle -> COMPACTSTRING -> IO ()
