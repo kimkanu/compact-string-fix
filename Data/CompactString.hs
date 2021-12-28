@@ -212,6 +212,7 @@ import Prelude hiding
          readFile, writeFile, appendFile)
 
 import Data.Monoid
+import Data.Semigroup
 import qualified Data.List as L
 import Data.Maybe               (isJust, isNothing, listToMaybe)
 import Data.String              (IsString(..))
@@ -271,9 +272,11 @@ import Data.CompactString.Encodings
 instance Encoding a => Eq (CompactString a) where
         (CS a) == (CS b) = a == b
 
+instance Encoding a => Semigroup (CompactString a) where
+        (<>) = append
+
 instance Encoding a => Monoid (CompactString a) where
         mempty  = empty
-        mappend = append
         mconcat = concat
 
 instance Encoding a => Ord (CompactString a) where
